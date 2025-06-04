@@ -9,55 +9,78 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
+import eventBus from '../lib/eventBus';
 
-// Definisikan variabel di scope luar agar bisa diakses di seluruh script setup
 let map = null;
 const outlets = ref([]);
 const pending = ref(true);
 const error = ref(null);
+let L = null; 
 
-// Fungsi untuk mengambil data dari backend
+const tileLayers = {
+  openstreetmap: {
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    options: { attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }
+  },
+  satellite: { 
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    options: { attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community' }
+  }
+};
+let activeTileLayer = null;
+
 async function fetchData() {
   try {
     pending.value = true;
     error.value = null;
+    console.log('[Map.vue] Memulai fetchData...');
     const response = await fetch('http://localhost:3001/api/outlets');
+    console.log('[Map.vue] Status respons fetch:', response.status);
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
     }
-    outlets.value = await response.json();
+    const data = await response.json();
+    console.log('[Map.vue] Data outlets diterima:', JSON.parse(JSON.stringify(data))); // Log data
+    outlets.value = data;
   } catch (e) {
     error.value = e;
-    console.error("Gagal mengambil data outlets:", e);
+    console.error("[Map.vue] Error saat fetchData:", e);
   } finally {
     pending.value = false;
   }
 }
 
-// Hook onMounted hanya berjalan di sisi client
-onMounted(async () => {
-  // Lakukan dynamic import untuk Leaflet dan CSS-nya DI DALAM onMounted
-  // Ini memastikan kode Leaflet hanya dieksekusi di browser
-  const L = (await import('leaflet')).default;
-  await import('leaflet/dist/leaflet.css');
+function switchTileLayer(type) {
+  if (!map || !L || !tileLayers[type]) return; 
+  if (activeTileLayer) map.removeLayer(activeTileLayer);
+  activeTileLayer = L.tileLayer(tileLayers[type].url, tileLayers[type].options);
+  activeTileLayer.addTo(map);
+}
 
-  await fetchData(); // Panggil fetchData setelah Leaflet siap
+onMounted(async () => {
+  console.log('[Map.vue] Komponen onMounted dimulai.');
+  // Karena onMounted HANYA berjalan di client, kita tidak perlu 'if (process.client)' di sini
+  
+  L = (await import('leaflet')).default;
+  await import('leaflet/dist/leaflet.css');
+  console.log('[Map.vue] Leaflet berhasil diimpor.');
+
+  await fetchData();
+  console.log('[Map.vue] Selesai fetchData. Isi outlets.value:', JSON.parse(JSON.stringify(outlets.value)));
 
   const mapElement = document.getElementById('leaflet-map-container');
   
-  // Cek apakah mapElement ada dan map belum diinisialisasi
   if (mapElement && !map) { 
-    map = L.map(mapElement).setView([-2.5489, 118.0149], 5); // Fokus awal di Indonesia
+    map = L.map(mapElement).setView([-2.5489, 118.0149], 5);
+    console.log('[Map.vue] Peta berhasil diinisialisasi.');
+    
+    switchTileLayer('openstreetmap'); 
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
-
-    // Tampilkan marker jika data outlet berhasil diambil
     if (outlets.value && outlets.value.length > 0) {
+      console.log(`[Map.vue] Menambahkan ${outlets.value.length} marker ke peta.`);
       outlets.value.forEach(outlet => {
-        if (outlet.latitude != null && outlet.longitude != null) { // Pastikan koordinat valid
+        if (outlet.latitude != null && outlet.longitude != null) {
           L.marker([outlet.latitude, outlet.longitude])
             .addTo(map)
             .bindPopup(`
@@ -71,18 +94,26 @@ onMounted(async () => {
             `);
         }
       });
+    } else {
+      console.log('[Map.vue] Tidak ada data outlet untuk ditampilkan sebagai marker.');
     }
+    eventBus.on('changeMapLayer', switchTileLayer);
+  }
+});
+
+onUnmounted(() => {
+  if (typeof document !== 'undefined') { // Pastikan hanya berjalan di client
+    eventBus.remove('changeMapLayer', switchTileLayer);
   }
 });
 </script>
 
-<style scoped> /* `scoped` berarti style ini hanya berlaku untuk komponen ini */
+<style scoped> 
+@import 'leaflet/dist/leaflet.css';
+
 .loading-overlay, .error-overlay {
-  /* Styling untuk overlay, pastikan ini tidak mengganggu posisi map */
-  /* Jika map-container punya position relative, ini akan relatif terhadapnya */
-  /* Jika tidak, Anda mungkin perlu wrapper div di template dengan position: relative */
-  position: absolute; 
-  top: 50%;
+  position: absolute;
+  top: 50%; 
   left: 50%;
   transform: translate(-50%, -50%);
   background: rgba(255, 255, 255, 0.9);
@@ -91,25 +122,20 @@ onMounted(async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 10; /* Pastikan di atas peta jika peta belum dimuat */
+  z-index: 10;
   font-size: 1.2em;
   font-weight: 500;
   text-align: center;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  font-family: 'Poppins', sans-serif; /* Pastikan font Poppins jika belum global */
+  font-family: 'Poppins', sans-serif;
 }
 
-/* Styling untuk Dark Mode (jika Anda akan implementasikan di Astro) */
-/* Ini memerlukan cara deteksi dark mode di level Astro atau prop dari parent */
-/* .dark .loading-overlay, .dark .error-overlay { 
+.dark .loading-overlay, .dark .error-overlay { 
     background: rgba(31, 41, 55, 0.85); 
     color: #f3f4f6; 
-} */
-
-.error-overlay {
-  color: #EF4444; /* red-500 */
 }
 
-/* CSS Leaflet sudah diimpor di script, jadi @import di sini tidak diperlukan lagi */
-/* @import 'leaflet/dist/leaflet.css'; */
+.error-overlay {
+  color: #EF4444;
+}
 </style>

@@ -7,18 +7,12 @@ const pageSlogan = "Rasa Kebab Juara, Outletnya di Mana Saja!";
 ---
 
 <MainLayout title="Kebab 95 Astro - Peta Interaktif">
-    {/* Bagian slogan dengan styling Tailwind */}
     <div class="p-6 text-center"> 
         <h2 class="text-2xl font-semibold text-slate-700 dark:text-slate-200 mb-2">{pageSlogan}</h2>
         <p class="text-slate-600 dark:text-slate-300">Temukan outlet Kebab 95 terdekat untuk menikmati kelezatan tiada tara!</p>
     </div>
 
-    {/* Kontainer untuk MapComponent dengan pengaturan tinggi agar mengisi ruang */}
-    {/* Anda bisa menyesuaikan 'h-[calc(100vh-180px)]'. 
-        180px adalah perkiraan tinggi untuk header dan bagian slogan. 
-        Sesuaikan jika perlu agar peta tidak terpotong atau terlalu banyak ruang kosong.
-    */}
-    <div class="w-full h-[calc(100vh-180px)] p-1 md:p-2">
+    <div class="w-full h-[calc(100vh-190px)] p-1 md:p-2">
       <MapComponent client:load />
     </div>
 </MainLayout>
