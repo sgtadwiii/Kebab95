@@ -1,51 +1,28 @@
 ---
-// src/pages/admin/index.astro
 import MainLayout from '../../layouts/MainLayout.astro';
 import AddOutletForm from '../../components/AddOutletForm.vue';
-import ManageOutlets from '../../components/ManageOutlets.vue'; // <-- Impor komponen baru
+import ManageOutlets from '../../components/ManageOutlets.vue';
 ---
-
 <MainLayout title="Dashboard Admin - Kebab 95">
-
-    <div id="admin-content" class="p-8 hidden">
-        <h2 class="text-2xl font-bold mb-4 text-slate-800 dark:text-slate-100">Selamat Datang, Admin!</h2>
-
-        <div class="p-6 bg-white dark:bg-slate-800 rounded-lg shadow">
-            <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Tambah Outlet Baru</h3>
-            <AddOutletForm client:load />
+    {/* Halaman ini sekarang hanya berisi HTML, tidak ada script penjaga lagi */}
+    <div id="admin-content" class="p-4 sm:p-6 lg:p-8">
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100">Monitoring</h2>
+            {/* ... bagian monitoring ... */}
         </div>
-
-        <div class="mt-8 p-6 bg-white dark:bg-slate-800 rounded-lg shadow">
-            <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Daftar Outlet Saat Ini</h3>
-            <ManageOutlets client:load />
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div class="lg:col-span-2">
+                 <div class="p-6 bg-white dark:bg-slate-800 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Tambah / Edit Outlet</h3>
+                    <AddOutletForm client:load />
+                </div>
+            </div>
+            <div class="lg:col-span-3">
+                <div class="p-6 bg-white dark:bg-slate-800 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Daftar Outlet Saat Ini</h3>
+                    <ManageOutlets client:load />
+                </div>
+            </div>
         </div>
-    </div>
-
-    <div id="access-denied" class="p-8 text-center hidden">
-        <h2 class="text-2xl font-bold text-red-500 mb-4">Akses Ditolak!</h2>
-        <p>Halaman ini hanya untuk pengguna dengan peran (role) sebagai Admin.</p>
-        <a href="/" class="text-yellow-500 hover:underline mt-4 inline-block">Kembali ke Peta</a>
     </div>
 </MainLayout>
-
-<script>
-    // Script 'penjaga' halaman ini tidak berubah
-    import { jwtDecode } from "jwt-decode";
-    const adminContent = document.getElementById('admin-content');
-    const accessDenied = document.getElementById('access-denied');
-    const token = localStorage.getItem('authToken');
-    if (!token) { window.location.href = '/login'; }
-    else {
-        try {
-            const decodedToken = jwtDecode(token);
-            if (decodedToken.role === 'admin') {
-                if (adminContent) adminContent.classList.remove('hidden');
-            } else {
-                if (accessDenied) accessDenied.classList.remove('hidden');
-            }
-        } catch (error) {
-            localStorage.removeItem('authToken');
-            window.location.href = '/login';
-        }
-    }
-</script>
