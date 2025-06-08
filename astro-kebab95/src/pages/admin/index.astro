@@ -1,19 +1,23 @@
 ---
-// src/pages/admin/index.astro - VERSI FINAL DENGAN FORM
+// src/pages/admin/index.astro
 import MainLayout from '../../layouts/MainLayout.astro';
-// Impor komponen form yang sudah kita buat sebelumnya
 import AddOutletForm from '../../components/AddOutletForm.vue';
+import ManageOutlets from '../../components/ManageOutlets.vue'; // <-- Impor komponen baru
 ---
 
 <MainLayout title="Dashboard Admin - Kebab 95">
 
     <div id="admin-content" class="p-8 hidden">
         <h2 class="text-2xl font-bold mb-4 text-slate-800 dark:text-slate-100">Selamat Datang, Admin!</h2>
-        <p class="text-slate-600 dark:text-slate-400 mb-8">Gunakan form di bawah ini untuk menambahkan outlet baru ke dalam database.</p>
 
         <div class="p-6 bg-white dark:bg-slate-800 rounded-lg shadow">
-            {/* Kita ganti teks placeholder dengan komponen form Vue kita */}
+            <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Tambah Outlet Baru</h3>
             <AddOutletForm client:load />
+        </div>
+
+        <div class="mt-8 p-6 bg-white dark:bg-slate-800 rounded-lg shadow">
+            <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Daftar Outlet Saat Ini</h3>
+            <ManageOutlets client:load />
         </div>
     </div>
 
@@ -22,21 +26,16 @@ import AddOutletForm from '../../components/AddOutletForm.vue';
         <p>Halaman ini hanya untuk pengguna dengan peran (role) sebagai Admin.</p>
         <a href="/" class="text-yellow-500 hover:underline mt-4 inline-block">Kembali ke Peta</a>
     </div>
-
 </MainLayout>
 
 <script>
-    // Script 'penjaga' halaman ini tidak perlu diubah, tetap sama
+    // Script 'penjaga' halaman ini tidak berubah
     import { jwtDecode } from "jwt-decode";
-
     const adminContent = document.getElementById('admin-content');
     const accessDenied = document.getElementById('access-denied');
-
     const token = localStorage.getItem('authToken');
-
-    if (!token) {
-        window.location.href = '/login';
-    } else {
+    if (!token) { window.location.href = '/login'; }
+    else {
         try {
             const decodedToken = jwtDecode(token);
             if (decodedToken.role === 'admin') {
@@ -45,7 +44,6 @@ import AddOutletForm from '../../components/AddOutletForm.vue';
                 if (accessDenied) accessDenied.classList.remove('hidden');
             }
         } catch (error) {
-            console.error('Token tidak valid atau rusak:', error);
             localStorage.removeItem('authToken');
             window.location.href = '/login';
         }
