@@ -5,8 +5,6 @@ export interface Props {
 }
 const { title = 'Kebab 95 Astro' } = Astro.props;
 
-// Definisi SVG ikon ini tetap ada karena <button> di template masih menggunakannya,
-// meskipun logika JavaScript-nya dikomentari.
 const themeIconLight = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-slate-500 dark:text-slate-400"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /></svg>`;
 const themeIconDark = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-slate-500 dark:text-slate-400"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25c0 5.385 4.365 9.75 9.75 9.75 2.572 0 4.92-.99 6.697-2.657z" /></svg>`;
 ---
@@ -24,9 +22,7 @@ const themeIconDark = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewB
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
     <style is:global>
-        body {
-            font-family: 'Poppins', sans-serif;
-        }
+        body { font-family: 'Poppins', sans-serif; }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; border: 3px solid transparent; }
@@ -69,33 +65,29 @@ const themeIconDark = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewB
                 </p>
             </div>
         </aside>
-
+        
         <main class="flex-grow overflow-y-auto relative">
             <slot /> 
         </main>
     </div>
 
-    {/* SCRIPT CLIENT-SIDE DIPROSES OLEH ASTRO/VITE - TANPA is:inline */}
+    {/* SCRIPT CLIENT-SIDE - TANPA IMPOR MODUL EKSTERNAL */}
     <script define:vars={{ themeIconLight, themeIconDark }}>
-        // Path ini seharusnya menunjuk dari src/layouts/MainLayout.astro ke src/lib/eventBus.js
-        // Astro akan mencoba mem-bundle ini.
-        import eventBus from '../lib/eventBus.js'; 
-        
-        console.log('[MainLayout DEBUG] Script utama client-side Astro-processed berhasil dimuat.');
-        console.log('[MainLayout DEBUG] Hasil impor eventBus:', eventBus);
+        // Kode eventBus sekarang ada di sini langsung, tidak perlu impor.
+        const eventBus = {
+            on(event, callback) { document.addEventListener(event, (e) => callback(e.detail)); },
+            dispatch(event, data) { document.dispatchEvent(new CustomEvent(event, { detail: data })); },
+            remove(event, callback) { document.removeEventListener(event, callback); }
+        };
 
-        // SEMENTARA NONAKTIFKAN SEMUA KODE DI BAWAH INI UNTUK DEBUGGING IMPOR EVENTBUS
-        /*
+        // --- Logika Dark/Light Mode ---
         const htmlEl = document.documentElement;
         const themeToggleBtn = document.getElementById('theme-toggle-btn');
-        console.log('[MainLayout] themeToggleBtn:', themeToggleBtn);
-
         const themeToggleIconEl = document.getElementById('theme-toggle-icon');
         const themeToggleTextEl = document.getElementById('theme-toggle-text');
         const localStorageKey = 'kebab95-astro-theme';
 
         function applyTheme(theme) {
-            console.log('[MainLayout] applyTheme called with:', theme);
             if (theme === 'dark') {
                 htmlEl.classList.add('dark');
                 if(themeToggleIconEl) themeToggleIconEl.innerHTML = themeIconDark;
@@ -106,80 +98,46 @@ const themeIconDark = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewB
                 if(themeToggleTextEl) themeToggleTextEl.textContent = 'Ganti ke Gelap';
             }
         }
-
         function toggleTheme() {
-            console.log('[MainLayout] toggleTheme function called');
             const newTheme = htmlEl.classList.contains('dark') ? 'light' : 'dark';
             localStorage.setItem(localStorageKey, newTheme);
             applyTheme(newTheme);
         }
-
         let currentTheme = localStorage.getItem(localStorageKey) || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        console.log('[MainLayout] Initial theme determined:', currentTheme);
         applyTheme(currentTheme);
+        if (themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme);
         
-        if (themeToggleBtn) {
-            themeToggleBtn.addEventListener('click', toggleTheme);
-            console.log('[MainLayout] Event listener added to themeToggleBtn');
-        } else {
-            console.warn('[MainLayout] themeToggleBtn tidak ditemukan!');
-        }
-
+        // --- Logika Tombol Layer Peta ---
         const satelliteBtn = document.getElementById('satellite-layer-btn');
-        console.log('[MainLayout] satelliteBtn:', satelliteBtn);
         const osmBtn = document.getElementById('osm-layer-btn');
-        console.log('[MainLayout] osmBtn:', osmBtn);
-        
         const activeBtnClasses = ['bg-yellow-100', 'dark:bg-yellow-700/50', 'text-yellow-700', 'dark:text-yellow-300', 'font-semibold'];
         const inactiveBtnClasses = ['hover:bg-slate-100', 'dark:hover:bg-slate-700', 'text-slate-700', 'dark:text-slate-300'];
 
         function updateButtonStyles(activeButton, inactiveButton) {
-            console.log('[MainLayout] updateButtonStyles called for:', activeButton ? activeButton.id : 'null', 'and', inactiveButton ? inactiveButton.id : 'null');
             if (activeButton) {
-              activeButton.classList.remove(...inactiveBtnClasses.filter(c => activeButton.classList.contains(c)));
-              activeButton.classList.add(...activeBtnClasses.filter(c => !activeButton.classList.contains(c)));
+              activeButton.classList.remove(...inactiveBtnClasses);
+              activeButton.classList.add(...activeBtnClasses);
             }
             if (inactiveButton) {
-              inactiveButton.classList.remove(...activeBtnClasses.filter(c => inactiveButton.classList.contains(c)));
-              inactiveButton.classList.add(...inactiveBtnClasses.filter(c => !inactiveButton.classList.contains(c)));
+              inactiveButton.classList.remove(...activeBtnClasses);
+              inactiveButton.classList.add(...inactiveBtnClasses);
             }
         }
-
         if (satelliteBtn) {
             satelliteBtn.addEventListener('click', () => {
-                console.log('[MainLayout] satelliteBtn clicked');
-                if (eventBus && typeof eventBus.dispatch === 'function') {
-                    eventBus.dispatch('changeMapLayer', 'satellite');
-                } else {
-                    console.error('[MainLayout] eventBus.dispatch is not a function for satelliteBtn');
-                }
+                eventBus.dispatch('changeMapLayer', 'satellite');
                 updateButtonStyles(satelliteBtn, osmBtn);
             });
-            console.log('[MainLayout] Event listener added to satelliteBtn');
-        } else {
-            console.warn('[MainLayout] satelliteBtn tidak ditemukan!');
         }
-
         if (osmBtn) {
             osmBtn.addEventListener('click', () => {
-                console.log('[MainLayout] osmBtn clicked');
-                if (eventBus && typeof eventBus.dispatch === 'function') {
-                    eventBus.dispatch('changeMapLayer', 'openstreetmap');
-                } else {
-                    console.error('[MainLayout] eventBus.dispatch is not a function for osmBtn');
-                }
+                eventBus.dispatch('changeMapLayer', 'openstreetmap');
                 updateButtonStyles(osmBtn, satelliteBtn);
             });
-            console.log('[MainLayout] Event listener added to osmBtn');
-        } else {
-            console.warn('[MainLayout] osmBtn tidak ditemukan!');
         }
-        
         if(osmBtn && satelliteBtn){
-             console.log('[MainLayout] Applying initial button styles');
              updateButtonStyles(osmBtn, satelliteBtn);
         }
-        */
     </script>
 </body>
 </html>
