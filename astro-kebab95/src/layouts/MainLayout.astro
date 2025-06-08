@@ -1,5 +1,4 @@
 ---
-// src/layouts/MainLayout.astro - VERSI PERBAIKAN FINAL
 import GlobalScriptManager from '../components/GlobalScriptManager.vue';
 export interface Props { title?: string; }
 const { title = 'Kebab 95 Astro' } = Astro.props;
@@ -11,39 +10,23 @@ const { title = 'Kebab 95 Astro' } = Astro.props;
     <meta name="viewport" content="width=device-width" />
     <title>{title}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-    <script src="https://unpkg.com/jwt-decode/build/jwt-decode.js"></script>
+    
+    {/* PERBAIKAN: Memuat jwt-decode dari CDN di sini */}
+    <!-- <script is:inline src="https://unpkg.com/jwt-decode/build/jwt-decode.js"></script> -->
+    
     <style is:global> body { font-family: 'Poppins', sans-serif; } ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; border: 3px solid transparent; } :global(html.dark) ::-webkit-scrollbar-thumb { background-color: #4b5563; } </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 antialiased">
     <div class="flex h-screen w-screen overflow-hidden">
         <aside class="w-64 flex-shrink-0 bg-gray-900 text-slate-300 p-6 flex flex-col">
-            <div class="mb-8">
-                <h1 class="text-3xl font-bold text-yellow-400">Kebab 95</h1>
-                <p class="text-sm text-slate-400">Peta Outlet Interaktif</p>
-            </div>
-            
-            {/* --- KODE HTML TOMBOL LENGKAP DIKEMBALIKAN --- */}
-            <nav class="flex flex-col space-y-2">
-                <a href="/" class="flex items-center space-x-3 p-2 rounded-md text-sm font-medium hover:bg-slate-700 hover:text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h7.5" /></svg>
-                    <span>Beranda Peta</span>
-                </a>
-                <button id="theme-toggle-btn" class="flex items-center space-x-3 p-2 rounded-md text-sm font-medium hover:bg-slate-700 hover:text-white">
-                    <span id="theme-toggle-icon"></span><span id="theme-toggle-text"></span>
-                </button>
+            <div class="mb-8"> <h1 class="text-3xl font-bold text-yellow-400">Kebab 95</h1> <p class="text-sm text-slate-400">Peta Outlet Interaktif</p> </div>
+            <nav class="flex flex-col space-y-2 text-sm font-medium">
+                <a href="/" class="flex items-center space-x-3 p-2 rounded-md hover:bg-slate-700 hover:text-white"> <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h7.5" /></svg> <span>Beranda Peta</span> </a>
+                <button id="theme-toggle-btn" class="flex items-center space-x-3 p-2 rounded-md hover:bg-slate-700 hover:text-white"> <span id="theme-toggle-icon"></span> <span id="theme-toggle-text"></span> </button>
                 <div class="my-2 border-t border-gray-700"></div>
                 <p class="px-2 pt-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Tampilan Peta</p>
-                <button id="map-layer-toggle-btn" class="flex items-center space-x-3 p-2 rounded-md text-sm font-medium hover:bg-slate-700 hover:text-white">
-                    <span id="map-layer-toggle-icon"></span><span id="map-layer-toggle-text"></span>
-                </button>
-                <button id="heatmap-btn" class="flex items-center space-x-3 p-2 rounded-md text-sm font-medium hover:bg-slate-700 hover:text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.362-3.797A8.23 8.23 0 0112 3c1.135 0 2.236.206 3.232.566l-1.87 1.648z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467l-5.131-4.249A8.25 8.25 0 002.25 12c0 2.252.904 4.33 2.383 5.803a3.732 3.732 0 00-.495-.303l5.13 4.248A3.75 3.75 0 0012 18zm6.352-3.362l-5.13-4.248A3.752 3.752 0 0012 6.75c-1.135 0-2.236.206-3.232.566l5.13 4.248a3.752 3.752 0 00.495.303V12a8.25 8.25 0 00-2.25-5.803A8.287 8.287 0 0115 9.602c1.058 0 2.056.224 2.952.622M21 12a8.25 8.25 0 00-2.25-5.803A8.287 8.287 0 0115 9.602a8.983 8.983 0 00-3.362-3.797A8.23 8.23 0 0012 3C6.477 3 2 7.477 2 13.5S6.477 24 12 24s10-4.477 10-10.5c0-.202-.01-.401-.029-.599z" /></svg>
-                    <span class="truncate">Heatmap</span>
-                </button>
-                <a id="admin-add-outlet-btn" href="/admin" class="hidden flex items-center space-x-3 p-2 mt-4 rounded-md text-sm font-semibold border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <span>Tambahkan Outlet</span>
-                </a>
+                <button id="map-layer-toggle-btn" class="flex items-center space-x-3 p-2 rounded-md hover:bg-slate-700 hover:text-white"> <span id="map-layer-toggle-icon"></span> <span id="map-layer-toggle-text"></span> </button>
+                <a id="admin-add-outlet-btn" href="/admin" class="hidden flex items-center space-x-3 p-2 mt-4 rounded-md border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition-colors"> <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> <span>Tambahkan Outlet</span> </a>
             </nav>
             <div id="user-session-container" class="mt-auto">
                 <div id="user-info" class="hidden"><p class="text-sm text-center">Hi, <strong id="username-display" class="font-medium text-yellow-400">User</strong>!</p><button id="logout-btn" class="mt-2 w-full text-center text-sm text-red-500 hover:underline">Logout</button></div>

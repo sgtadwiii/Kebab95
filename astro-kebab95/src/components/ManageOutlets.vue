@@ -1,21 +1,21 @@
 <template>
   <div class="mt-4">
-    <div v-if="isLoading" class="text-center text-slate-500">
+    <div v-if="isLoading" class="text-center text-slate-500 dark:text-slate-400">
       Memuat daftar outlet...
     </div>
     <div v-else-if="error" class="text-center text-red-500">
       Gagal memuat data: {{ error }}
     </div>
-    <div v-else-if="outlets.length === 0" class="text-center text-slate-500">
+    <div v-else-if="outlets.length === 0" class="text-center text-slate-500 dark:text-slate-400">
       Belum ada outlet yang ditambahkan.
     </div>
     <ul v-else class="space-y-3">
-      <li v-for="outlet in outlets" :key="outlet.id" class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-md shadow-sm">
+      <li v-for="outlet in outlets" :key="outlet.id" class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900/50 rounded-md shadow-sm">
         <div>
           <p class="font-semibold text-slate-800 dark:text-slate-100">{{ outlet.nama_outlet }}</p>
           <p class="text-sm text-slate-600 dark:text-slate-400">{{ outlet.alamat }}</p>
         </div>
-        <div class="flex space-x-2 flex-shrink-0">
+        <div class="flex space-x-3 flex-shrink-0">
           <button @click="openEditModal(outlet)" class="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
             Edit
           </button>
@@ -31,29 +31,30 @@
     v-if="isModalOpen" 
     :outlet="selectedOutlet"
     @close="isModalOpen = false"
-    @data-updated="handleDataUpdate"
+    @data-updated="handleDataUpdate" 
   />
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import EditOutletModal from './EditOutletModal.vue'; // Impor komponen modal
+import EditOutletModal from './EditOutletModal.vue'; // Impor komponen modal baru
 
 const outlets = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
 
+// State untuk mengontrol modal
 const isModalOpen = ref(false);
 const selectedOutlet = ref(null);
 
 function openEditModal(outlet) {
-  selectedOutlet.value = { ...outlet }; // Kirim salinan data untuk diedit
+  selectedOutlet.value = outlet;
   isModalOpen.value = true;
 }
 
 function handleDataUpdate() {
-    isModalOpen.value = false;
-    fetchOutlets(); // Ambil ulang data setelah update
+    // Tidak perlu tutup modal di sini lagi karena modal menutup dirinya sendiri
+    fetchOutlets(); // Ambil ulang data setelah update agar daftar menjadi segar
 }
 
 async function fetchOutlets() {
@@ -81,6 +82,8 @@ async function deleteOutlet(id) {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || 'Gagal menghapus outlet.');
+
+    // Hapus item dari daftar di frontend tanpa perlu reload halaman
     outlets.value = outlets.value.filter(o => o.id !== id);
     alert(data.message);
   } catch (err) {

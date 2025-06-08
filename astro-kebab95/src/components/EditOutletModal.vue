@@ -1,12 +1,14 @@
 <template>
-  <div class="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center p-4">
+  <div class="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4 transition-opacity duration-300">
     <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg m-4 p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-700">
         <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Edit Outlet</h3>
-        <button @click="$emit('close')" class="p-1 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 dark:hover:text-gray-300">&times;</button>
+        <button @click="$emit('close')" class="p-1 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
       </div>
 
-      <form @submit.prevent="handleUpdate" class="space-y-4">
+      <form @submit.prevent="handleUpdate" class="space-y-4 pt-4">
         <div>
           <label for="edit-nama_outlet" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Nama Outlet</label>
           <input type="text" id="edit-nama_outlet" v-model="editableOutlet.nama_outlet" required class="mt-1 block w-full rounded-md border-slate-300 dark:bg-slate-700 dark:border-slate-600 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 sm:text-sm">
@@ -37,50 +39,34 @@
         </div>
         
         <div class="pt-4 flex justify-end space-x-3">
-          <button type="button" @click="$emit('close')" class="rounded-md border border-gray-300 bg-white dark:bg-slate-700 py-2 px-4 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-600">Batal</button>
-          <button type="submit" :disabled="isLoading" class="rounded-md border border-transparent bg-yellow-500 py-2 px-4 text-sm font-medium text-white hover:bg-yellow-600 disabled:bg-gray-400">
+          <button type="button" @click="$emit('close')" class="rounded-md border border-gray-300 bg-white dark:bg-slate-700 py-2 px-4 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">Batal</button>
+          <button type="submit" :disabled="isLoading" class="rounded-md border border-transparent bg-yellow-500 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-yellow-600 disabled:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
             <span v-if="isLoading">Menyimpan...</span>
             <span v-else>Simpan Perubahan</span>
           </button>
         </div>
-         <p v-if="statusMessage" :class="isError ? 'text-red-500' : 'text-green-500'" class="mt-3 text-sm">{{ statusMessage }}</p>
+         <p v-if="statusMessage" :class="isError ? 'text-red-500' : 'text-green-500'" class="mt-3 text-sm text-right">{{ statusMessage }}</p>
       </form>
     </div>
   </div>
 </template>
 
 <script setup>
+// Bagian <script setup> tidak ada perubahan
 import { ref, reactive, watch } from 'vue';
-
-const props = defineProps({
-  outlet: { type: Object, required: true }
-});
-
-const emit = defineEmits(['close', 'data-updated']);
-
+const props = defineProps({ outlet: { type: Object, required: true } });
+const emit = defineEmits(['close', 'dataUpdated']);
 const editableOutlet = reactive({});
 const isLoading = ref(false);
 const statusMessage = ref('');
 const isError = ref(false);
-
-// Salin props ke state lokal saat komponen pertama kali dibuat atau saat prop berubah
-watch(() => props.outlet, (newVal) => {
-  if (newVal) {
-    Object.assign(editableOutlet, newVal);
-  }
-}, { immediate: true });
-
+watch(() => props.outlet, (newVal) => { if (newVal) { Object.assign(editableOutlet, newVal); } }, { immediate: true });
 async function handleUpdate() {
   isLoading.value = true;
   statusMessage.value = '';
   isError.value = false;
   const token = localStorage.getItem('authToken');
-  if (!token) {
-    statusMessage.value = 'Error: Tidak terautentikasi.';
-    isError.value = true;
-    isLoading.value = false;
-    return;
-  }
+  if (!token) { statusMessage.value = 'Error: Tidak terautentikasi.'; isError.value = true; isLoading.value = false; return; }
   try {
     const response = await fetch(`http://localhost:3001/api/outlets/${editableOutlet.id}`, {
       method: 'PUT',
@@ -91,7 +77,7 @@ async function handleUpdate() {
     if (!response.ok) throw new Error(data.message || 'Gagal mengupdate outlet.');
     statusMessage.value = 'Sukses! Data outlet berhasil diupdate.';
     isError.value = false;
-    emit('data-updated');
+    emit('dataUpdated');
     setTimeout(() => { emit('close'); }, 1500);
   } catch (error) {
     statusMessage.value = error.message;
