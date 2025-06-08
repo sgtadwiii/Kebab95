@@ -81,6 +81,54 @@ app.get('/api/comments/:outlet_id', async (req, res) => {
 });
 
 // ====== PROTECTED ROUTES ======
+
+// Rute untuk ADMIN mengedit outlet yang sudah ada
+app.put('/api/outlets/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    const { id } = req.params; // Ambil ID dari parameter URL
+    const { nama_outlet, alamat, latitude, longitude, jam_operasional, telepon } = req.body;
+
+    // Validasi sederhana
+    if (!nama_outlet || !alamat || !latitude || !longitude) {
+        return res.status(400).json({ message: 'Data outlet tidak lengkap.' });
+    }
+
+    try {
+        const query = `
+            UPDATE outlets 
+            SET nama_outlet = ?, alamat = ?, latitude = ?, longitude = ?, jam_operasional = ?, telepon = ? 
+            WHERE id = ?
+        `;
+        const [result] = await pool.query(query, [nama_outlet, alamat, latitude, longitude, jam_operasional, telepon, id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Outlet dengan ID tersebut tidak ditemukan.' });
+        }
+        
+        res.json({ message: `Outlet dengan ID ${id} berhasil diupdate.` });
+    } catch (error) {
+        res.status(500).json({ message: 'Gagal mengupdate outlet di database', error: error.message });
+    }
+});
+
+// Rute untuk ADMIN menghapus outlet
+app.delete('/api/outlets/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    const { id } = req.params; // Ambil ID dari parameter URL
+
+    try {
+        const query = 'DELETE FROM outlets WHERE id = ?';
+        const [result] = await pool.query(query, [id]);
+
+        // Cek apakah ada baris yang terhapus
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Outlet dengan ID tersebut tidak ditemukan.' });
+        }
+
+        res.json({ message: `Outlet dengan ID ${id} berhasil dihapus.` });
+    } catch (error) {
+        res.status(500).json({ message: 'Gagal menghapus outlet dari database', error: error.message });
+    }
+});
+
 app.get('/api/profile', authMiddleware, (req, res) => {
     res.json({ message: 'Anda berhasil mengakses rute yang dilindungi!', user: req.user });
 });

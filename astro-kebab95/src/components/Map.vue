@@ -1,5 +1,6 @@
 <template>
-  <div id="leaflet-map-container" style="height: 500px; width: 100%; border-radius: 8px;"></div>
+  <div id="leaflet-map-container" style="height: 100%; width: 100%; border-radius: 8px; background-color: #e2e8f0;"></div>
+  
   <div v-if="pending && !error" class="loading-overlay">
     <p>Memuat data outlet Kebab 95...</p>
   </div>
@@ -10,13 +11,13 @@
 
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue';
-import eventBus from '../lib/eventBus';
 
 let map = null;
 const outlets = ref([]);
 const pending = ref(true);
 const error = ref(null);
 let L = null; 
+let kebabIcon = null; // Variabel untuk menyimpan ikon kustom
 
 const tileLayers = {
   openstreetmap: {
@@ -25,7 +26,7 @@ const tileLayers = {
   },
   satellite: { 
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    options: { attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community' }
+    options: { attribution: 'Tiles &copy; Esri' }
   }
 };
 let activeTileLayer = null;
@@ -34,18 +35,14 @@ async function fetchData() {
   try {
     pending.value = true;
     error.value = null;
-    console.log('[Map.vue] Memulai fetchData...');
     const response = await fetch('http://localhost:3001/api/outlets');
-    console.log('[Map.vue] Status respons fetch:', response.status);
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const data = await response.json();
-    console.log('[Map.vue] Data outlets diterima:', JSON.parse(JSON.stringify(data))); // Log data
-    outlets.value = data;
+    outlets.value = await response.json();
   } catch (e) {
     error.value = e;
-    console.error("[Map.vue] Error saat fetchData:", e);
+    console.error("Gagal mengambil data outlets:", e);
   } finally {
     pending.value = false;
   }
@@ -53,35 +50,46 @@ async function fetchData() {
 
 function switchTileLayer(type) {
   if (!map || !L || !tileLayers[type]) return; 
-  if (activeTileLayer) map.removeLayer(activeTileLayer);
+  if (activeTileLayer) {
+    map.removeLayer(activeTileLayer);
+  }
   activeTileLayer = L.tileLayer(tileLayers[type].url, tileLayers[type].options);
   activeTileLayer.addTo(map);
+  setTimeout(() => { map.invalidateSize(true); }, 10);
 }
 
+const handleLayerChange = (event) => {
+    const layerType = event.detail;
+    if (map) {
+      switchTileLayer(layerType);
+    }
+};
+
 onMounted(async () => {
-  console.log('[Map.vue] Komponen onMounted dimulai.');
-  // Karena onMounted HANYA berjalan di client, kita tidak perlu 'if (process.client)' di sini
-  
   L = (await import('leaflet')).default;
   await import('leaflet/dist/leaflet.css');
-  console.log('[Map.vue] Leaflet berhasil diimpor.');
 
+  // Definisikan ikon kustom menggunakan link Anda
+  kebabIcon = L.icon({
+      iconUrl: 'https://sagtadwi.it.student.pens.ac.id/logo2.png',
+      iconSize:     [40, 40], // Ukuran ikon [lebar, tinggi]
+      iconAnchor:   [20, 40], // Titik "paku" pada ikon (tengah bawah)
+      popupAnchor:  [0, -42]  // Posisi popup relatif terhadap iconAnchor
+  });
+  
   await fetchData();
-  console.log('[Map.vue] Selesai fetchData. Isi outlets.value:', JSON.parse(JSON.stringify(outlets.value)));
 
   const mapElement = document.getElementById('leaflet-map-container');
   
   if (mapElement && !map) { 
     map = L.map(mapElement).setView([-2.5489, 118.0149], 5);
-    console.log('[Map.vue] Peta berhasil diinisialisasi.');
-    
     switchTileLayer('openstreetmap'); 
 
     if (outlets.value && outlets.value.length > 0) {
-      console.log(`[Map.vue] Menambahkan ${outlets.value.length} marker ke peta.`);
       outlets.value.forEach(outlet => {
         if (outlet.latitude != null && outlet.longitude != null) {
-          L.marker([outlet.latitude, outlet.longitude])
+          // Gunakan ikon kustom saat membuat marker
+          L.marker([outlet.latitude, outlet.longitude], { icon: kebabIcon })
             .addTo(map)
             .bindPopup(`
               <div style="font-family: 'Poppins', sans-serif; font-size: 14px; max-width: 250px;">
@@ -94,48 +102,25 @@ onMounted(async () => {
             `);
         }
       });
-    } else {
-      console.log('[Map.vue] Tidak ada data outlet untuk ditampilkan sebagai marker.');
     }
-    eventBus.on('changeMapLayer', switchTileLayer);
+    document.addEventListener('changeMapLayer', handleLayerChange);
   }
 });
 
 onUnmounted(() => {
-  if (typeof document !== 'undefined') { // Pastikan hanya berjalan di client
-    eventBus.remove('changeMapLayer', switchTileLayer);
-  }
+  document.removeEventListener('changeMapLayer', handleLayerChange);
 });
 </script>
 
 <style scoped> 
 @import 'leaflet/dist/leaflet.css';
-
 .loading-overlay, .error-overlay {
-  position: absolute;
-  top: 50%; 
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(255, 255, 255, 0.9);
-  padding: 20px;
-  border-radius: 8px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 10;
-  font-size: 1.2em;
-  font-weight: 500;
-  text-align: center;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  font-family: 'Poppins', sans-serif;
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.9); padding: 20px; border-radius: 8px;
+  display: flex; justify-content: center; align-items: center;
+  z-index: 1000; font-size: 1.2em; font-weight: 500; text-align: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-family: 'Poppins', sans-serif;
 }
-
-.dark .loading-overlay, .dark .error-overlay { 
-    background: rgba(31, 41, 55, 0.85); 
-    color: #f3f4f6; 
-}
-
-.error-overlay {
-  color: #EF4444;
-}
+.dark .loading-overlay, .dark .error-overlay { background: rgba(31, 41, 55, 0.85); color: #f3f4f6; }
+.error-overlay { color: #EF4444; }
 </style>

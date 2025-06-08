@@ -1,0 +1,23 @@
+---
+// src/pages/register.astro
+import MainLayout from '../layouts/MainLayout.astro';
+import RegisterForm from '../components/RegisterForm.vue'; // Komponen baru yang akan kita buat
+---
+
+<MainLayout title="Registrasi - Kebab 95">
+    <div class="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="w-full max-w-md space-y-8">
+            <div>
+                <h2 class="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+                    Buat Akun Baru
+                </h2>
+                <p class="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+                    Dan nikmati semua fiturnya!
+                </p>
+            </div>
+
+            <RegisterForm client:load />
+
+        </div>
+    </div>
+</MainLayout>
